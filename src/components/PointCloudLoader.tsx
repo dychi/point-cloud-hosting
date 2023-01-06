@@ -17,8 +17,8 @@ const PointCloudLoader: NextPage = () => {
 
   useEffect(() => {
     // ウィンドウサイズ
-    const w = 800
-    const h = 600
+    const w = window.innerWidth
+    const h = window.innerHeight
 
     // レンダラーを作成
     const renderer = new WebGLRenderer()
@@ -51,7 +51,7 @@ const PointCloudLoader: NextPage = () => {
       size: 0.01,
     })
     plyLoader.load(
-      'desk.ply',
+      'park.ply',
       (geometry) => {
         console.log(material.toJSON())
         const particles = new Points(geometry, material)
