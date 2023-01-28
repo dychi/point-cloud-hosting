@@ -93,7 +93,7 @@ const WebglGeometryExtrudeSplines: NextPage = () => {
         mesh.geometry.dispose()
       }
 
-      const extrudePath = splines[params.spline]
+      const extrudePath = splines.GrannyKnot
 
       tubeGeometry = new TubeGeometry(
         extrudePath,

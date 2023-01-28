@@ -126,7 +126,7 @@ const GolfCourseTourComponent: NextPage = () => {
     const cameraRouteObject = new Object3D()
     cameraRouteGeometry = new TubeGeometry(cameraRoutePath, 20, 0.1, 3, false)
     const cameraRouteMaterial = new MeshBasicMaterial({
-      color: 0xff00ff,
+      color: 0xffffff,
     })
     const wireframeMaterial = new MeshBasicMaterial({
       color: 0x000000,
