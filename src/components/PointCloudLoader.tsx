@@ -7,9 +7,12 @@ import {
   PointsMaterial,
   Scene,
   WebGLRenderer,
+  AxesHelper,
 } from 'three'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import GUI from 'lil-gui'
 
 const PointCloudLoader: NextPage = () => {
   // canvasのコンテナ用
@@ -44,6 +47,18 @@ const PointCloudLoader: NextPage = () => {
     // シーンを作成
     const scene = new Scene()
 
+    // 座標軸を表示
+    const axes = new AxesHelper(25)
+    scene.add(axes)
+
+    // guiを追加
+    const gui = new GUI()
+    gui.add(document, 'title')
+    const obj = {
+      hello_function: () => alert('hello'),
+    }
+    gui.add(obj, 'hello_function')
+
     // plyファイルの読み込み
     const plyLoader = new PLYLoader()
     const material = new PointsMaterial({
@@ -65,6 +80,32 @@ const PointCloudLoader: NextPage = () => {
         console.log(error)
       }
     )
+
+    // // fbxファイルの読み込み
+    // const fbxLoader = new FBXLoader()
+    // fbxLoader.load(
+    //   'dog.fbx',
+    //   (object) => {
+    //     object.traverse(function (child) {
+    //       if ((child as THREE.Mesh).isMesh) {
+    //         // (child as THREE.Mesh).material = material
+    //         if ((child as THREE.Mesh).material) {
+    //           ;(
+    //             (child as THREE.Mesh).material as THREE.MeshBasicMaterial
+    //           ).transparent = false
+    //         }
+    //       }
+    //     })
+    //     object.scale.set(0.01, 0.01, 0.01)
+    //     scene.add(object)
+    //   },
+    //   (xhr) => {
+    //     console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+    //   },
+    //   (error) => {
+    //     console.error(error)
+    //   }
+    // )
 
     // render関数を定義
     const render = () => {
