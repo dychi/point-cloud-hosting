@@ -108,16 +108,17 @@ const GolfCourseTourComponent: NextPage = () => {
     // guiを追加
     const gui = new GUI()
     gui.add(document, 'title')
+    const folderCamera = gui.addFolder('Camera')
     const obj = {
-      look_with_tour: () => {
-        if (isMovingCamera) {
-          setIsMovingCamera(false)
-        } else {
-          setIsMovingCamera(true)
-        }
-      },
+      look_with_tour: isMovingCamera,
     }
-    gui.add(obj, 'look_with_tour')
+    folderCamera.add(obj, 'look_with_tour').onChange(() => {
+      if (isMovingCamera) {
+        setIsMovingCamera(false)
+      } else {
+        setIsMovingCamera(true)
+      }
+    })
   }
 
   // -- オブジェクト定義 --
@@ -127,16 +128,10 @@ const GolfCourseTourComponent: NextPage = () => {
     cameraRouteGeometry = new TubeGeometry(cameraRoutePath, 20, 0.1, 3, false)
     const cameraRouteMaterial = new MeshBasicMaterial({
       color: 0xffffff,
-    })
-    const wireframeMaterial = new MeshBasicMaterial({
-      color: 0x000000,
-      opacity: 0.3,
-      wireframe: true,
-      transparent: false,
+      opacity: 0.1,
+      transparent: true,
     })
     const cameraRouteMesh = new Mesh(cameraRouteGeometry, cameraRouteMaterial)
-    const wireframe = new Mesh(cameraRouteGeometry, wireframeMaterial)
-    cameraRouteMesh.add(wireframe)
     cameraRouteObject.add(cameraRouteMesh)
     // 移動する視点のカメラ
     movingCamera = new PerspectiveCamera(
