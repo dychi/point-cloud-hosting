@@ -1,9 +1,10 @@
 import { NextPage } from 'next'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, RefObject } from 'react'
 import {
   AxesHelper,
   CameraHelper,
   CatmullRomCurve3,
+  GridHelper,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -11,6 +12,7 @@ import {
   Points,
   PointsMaterial,
   Scene,
+  SphereGeometry,
   TubeGeometry,
   Vector3,
   WebGLRenderer,
@@ -18,10 +20,16 @@ import {
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import GUI from 'lil-gui'
+import styles from '../styles/Home.module.css'
 
 const GolfCourseTourComponent: NextPage = () => {
-  const mountRef = useRef<HTMLDivElement>(null)
+  const canvasMountRef = useRef<HTMLDivElement>(null)
+  const boxMountRef = useRef<HTMLDivElement>(null)
+  const modalMountRef = useRef<HTMLDivElement>(null)
+
   const [isMovingCamera, setIsMovingCamera] = useState(false)
+  const [showBoxText, setShowBoxText] = useState(false)
+
   var scrollPercent = 0
   // -- 関数定義 --
   // 線型補間
@@ -65,6 +73,7 @@ const GolfCourseTourComponent: NextPage = () => {
   var renderer: WebGLRenderer
   var elm: HTMLDivElement | null
   var cameraRouteGeometry: TubeGeometry
+  var ballMesh: Mesh
 
   // -- 定数定義 --
   const scale = 1
@@ -79,7 +88,7 @@ const GolfCourseTourComponent: NextPage = () => {
     renderer = new WebGLRenderer()
     renderer.setSize(w, h)
     renderer.setPixelRatio(window.devicePixelRatio)
-    elm = mountRef.current
+    elm = canvasMountRef.current
     dom = renderer.domElement
     // canvasにレンダラーのcanvasを追加
     elm?.appendChild(renderer.domElement)
@@ -104,6 +113,9 @@ const GolfCourseTourComponent: NextPage = () => {
     // 座標軸を表示
     const axes = new AxesHelper(25)
     scene.add(axes)
+    // 地面を作成
+    const plane = new GridHelper(25)
+    scene.add(plane)
 
     // guiを追加
     const gui = new GUI()
@@ -111,12 +123,20 @@ const GolfCourseTourComponent: NextPage = () => {
     const folderCamera = gui.addFolder('Camera')
     const obj = {
       look_with_tour: isMovingCamera,
+      show_camera_position: showBoxText,
     }
     folderCamera.add(obj, 'look_with_tour').onChange(() => {
       if (isMovingCamera) {
         setIsMovingCamera(false)
       } else {
         setIsMovingCamera(true)
+      }
+    })
+    folderCamera.add(obj, 'show_camera_position').onChange(() => {
+      if (showBoxText) {
+        setShowBoxText(false)
+      } else {
+        setShowBoxText(true)
       }
     })
   }
@@ -169,6 +189,38 @@ const GolfCourseTourComponent: NextPage = () => {
       }
     )
   }
+  // クリックアクション用オブジェクト
+  const addClickableObject = () => {
+    const ballGeometry = new SphereGeometry(0.5, 32)
+    const ballMaterial = new MeshBasicMaterial({
+      color: 0xffffff,
+    })
+    ballMesh = new Mesh(ballGeometry, ballMaterial)
+    ballMesh.position.set(2, 3, -3)
+    scene.add(ballMesh)
+  }
+  const updateElementPositionOnScreen = (
+    mesh: Object3D,
+    ref: RefObject<HTMLDivElement>,
+    innerHtml: string,
+    visible: boolean = false
+  ) => {
+    const worldPos = mesh.getWorldPosition(new Vector3())
+    const projection = worldPos.project(camera)
+    const sx = (window.innerHeight / 2) * (+projection.x + 1.0)
+    const sy = (window.innerHeight / 2) * (-projection.y + 1.0)
+    const tf = ref.current as HTMLDivElement
+    if (visible) {
+      tf.innerHTML =
+        `<p>スクリーン座標(${Math.round(sx)}, ${Math.round(sy)})` + innerHtml
+      tf.style.transform = `translate(${sx}px, ${sy}px)`
+    } else {
+      tf.innerHTML = ''
+      tf.style.transform = ''
+    }
+  }
+
+  // -- rendering --
   // アニメーション用のrender関数を定義
   const render = () => {
     // animate camera along spline
@@ -211,7 +263,21 @@ const GolfCourseTourComponent: NextPage = () => {
 
     // options
     cameraHelper.update()
-    controls.update()
+    // controls.update()
+
+    // HTML要素の座標更新
+    if (showBoxText) {
+      updateElementPositionOnScreen(
+        movingCamera,
+        boxMountRef,
+        '<button>ボタン</button>',
+        true
+      )
+    } else {
+      updateElementPositionOnScreen(movingCamera, boxMountRef, '')
+    }
+    updateElementPositionOnScreen(ballMesh, modalMountRef, '', true)
+
     // 画面に表示
     renderer.render(scene, isMovingCamera ? movingCamera : camera)
     // 次のフレームを要求
@@ -224,13 +290,20 @@ const GolfCourseTourComponent: NextPage = () => {
     options()
     createCameraRouteObject()
     loadGolfCourseModel()
+    addClickableObject()
     render()
     return () => {
       elm?.removeChild(renderer.domElement)
     }
   })
 
-  return <div ref={mountRef} />
+  return (
+    <>
+      <div ref={canvasMountRef} />
+      <div id="box" ref={boxMountRef} className={styles.boxText} />
+      <div id="modal" ref={modalMountRef} className={styles.boxText} />
+    </>
+  )
 }
 
 export default GolfCourseTourComponent
