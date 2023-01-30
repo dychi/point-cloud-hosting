@@ -49,10 +49,12 @@ const GolfCourseTourComponent: NextPage = () => {
   // コースのカメラ視点移動パス定義
   const cameraRoutePath = new CatmullRomCurve3(
     [
-      new Vector3(0, 0, 10), // 最初の位置: レギュラーティー位置
-      new Vector3(0, 0, 5), // 最初の位置: レディースティー位置
-      new Vector3(0, 5, -2), // フェアウェイバンカー位置
-      new Vector3(0, 4, -10), // グリーン位置
+      new Vector3(21, 0.5, 29), // 最初の位置: レギュラーティー位置
+      new Vector3(10, 1, 15), // 最初の位置: レディースティー位置
+      new Vector3(2, 5, 6), // フェアウェイバンカー位置
+      new Vector3(-4, 6, -1), // グリーン位置
+      new Vector3(-17, 6.5, -10), // グリーン位置
+      new Vector3(-20, 5, -15), // グリーン位置
     ],
     false,
     'catmullrom'
@@ -114,7 +116,7 @@ const GolfCourseTourComponent: NextPage = () => {
     const axes = new AxesHelper(25)
     scene.add(axes)
     // 地面を作成
-    const plane = new GridHelper(25)
+    const plane = new GridHelper(100)
     scene.add(plane)
 
     // guiを追加
@@ -148,7 +150,7 @@ const GolfCourseTourComponent: NextPage = () => {
     cameraRouteGeometry = new TubeGeometry(cameraRoutePath, 20, 0.1, 3, false)
     const cameraRouteMaterial = new MeshBasicMaterial({
       color: 0xffffff,
-      opacity: 0.1,
+      opacity: 0.3,
       transparent: true,
     })
     const cameraRouteMesh = new Mesh(cameraRouteGeometry, cameraRouteMaterial)
@@ -190,13 +192,13 @@ const GolfCourseTourComponent: NextPage = () => {
     )
   }
   // クリックアクション用オブジェクト
-  const addClickableObject = () => {
+  const addClickableObject = (x: number, y: number, z: number) => {
     const ballGeometry = new SphereGeometry(0.5, 32)
     const ballMaterial = new MeshBasicMaterial({
       color: 0xffffff,
     })
     ballMesh = new Mesh(ballGeometry, ballMaterial)
-    ballMesh.position.set(2, 3, -3)
+    ballMesh.position.set(x, y, z)
     scene.add(ballMesh)
   }
   const updateElementPositionOnScreen = (
@@ -222,11 +224,13 @@ const GolfCourseTourComponent: NextPage = () => {
 
   // -- rendering --
   // アニメーション用のrender関数を定義
+  var scrollDistance: number = 10
   const render = () => {
     // animate camera along spline
     const time = Date.now()
     const looptime = 20 * 1000
-    const t = (time % looptime) / looptime
+    // const t = (time % looptime) / looptime
+    const t = (Math.abs(scrollDistance) % looptime) / looptime
     cameraRouteGeometry.parameters.path.getPointAt(t, position)
     position.multiplyScalar(scale)
     // interpolation
@@ -245,6 +249,7 @@ const GolfCourseTourComponent: NextPage = () => {
 
     cameraRouteGeometry.parameters.path.getTangentAt(t, direction)
     const offset = 0.1
+    normal.copy(binormal).cross(direction)
     // we move on a offset on its binormal
     position.add(normal.clone().multiplyScalar(offset))
 
@@ -255,10 +260,21 @@ const GolfCourseTourComponent: NextPage = () => {
       (t + 30 / cameraRouteGeometry.parameters.path.getLength()) % 1,
       lookAt
     )
-
     lookAt.multiplyScalar(scale)
     // 移動する視点の座標を更新
-    movingCamera.matrix.lookAt(movingCamera.position, lookAt, normal)
+    if (movingCamera.position.x <= 0) {
+      movingCamera.matrix.lookAt(
+        movingCamera.position,
+        lookAt.multiply(new Vector3(-1, 1, -1)),
+        normal.multiply(new Vector3(1, -1, 1))
+      )
+    } else {
+      movingCamera.matrix.lookAt(
+        movingCamera.position,
+        lookAt,
+        normal.multiply(new Vector3(1, -1, 1))
+      )
+    }
     movingCamera.quaternion.setFromRotationMatrix(movingCamera.matrix)
 
     // options
@@ -290,8 +306,20 @@ const GolfCourseTourComponent: NextPage = () => {
     options()
     createCameraRouteObject()
     loadGolfCourseModel()
-    addClickableObject()
+    // 開始点
+    addClickableObject(21, 0.5, 29)
+    addClickableObject(10, 2, 15)
+    addClickableObject(2, 5, 6)
+    addClickableObject(-4, 6, -1)
+    addClickableObject(-20, 5, -15)
+    //
     render()
+    // スクロールの移動量に合わせてカメラの座標を動かす
+    document.addEventListener('wheel', (event) => {
+      console.log(event.deltaY)
+      // movingCamera.position.z -= event.deltaY * 0.05
+      scrollDistance += event.deltaY * 0.05
+    })
     return () => {
       elm?.removeChild(renderer.domElement)
     }
