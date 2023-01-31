@@ -26,26 +26,12 @@ const GolfCourseTourComponent: NextPage = () => {
   const canvasMountRef = useRef<HTMLDivElement>(null)
   const boxMountRef = useRef<HTMLDivElement>(null)
   const modalMountRef = useRef<HTMLDivElement>(null)
+  const subCanvasMountRef = useRef<HTMLDivElement>(null)
 
   const [isMovingCamera, setIsMovingCamera] = useState(true)
   const [showBoxText, setShowBoxText] = useState(false)
 
-  var scrollPercent = 0
   // -- 関数定義 --
-  // 線型補間
-  const lerp = (x: number, y: number, a: number) => {
-    return (1 - a) * x + a * y
-  }
-  const scalePercent = (start: number, end: number) => {
-    return (scrollPercent - start) / (end - start)
-  }
-  const calcScrollPercent = (
-    top: number,
-    height: number,
-    clientHeight: number
-  ) => {
-    scrollPercent = (top / (height - clientHeight)) * 100
-  }
   // コースのカメラ視点移動パス定義
   const cameraRoutePath = new CatmullRomCurve3(
     [
@@ -76,11 +62,19 @@ const GolfCourseTourComponent: NextPage = () => {
   var elm: HTMLDivElement | null
   var cameraRouteGeometry: TubeGeometry
   var ballMesh: Mesh
+  // - サブウィンドウ
+  var subRenderer: WebGLRenderer
+  var subElm: HTMLDivElement | null
+  var subDom: HTMLCanvasElement
+  var subCamera: PerspectiveCamera
+  var subScene: Scene
+  var markerMesh: Mesh
 
   // -- 定数定義 --
   const scale = 1
 
   // -- 初期設定 --
+  // - メインウィンドウ -
   const init = () => {
     // ウィンドウサイズ
     const w = window.innerWidth
@@ -102,9 +96,43 @@ const GolfCourseTourComponent: NextPage = () => {
     const dist = h / 2 / Math.tan(fovRad)
     camera = new PerspectiveCamera(fov, w / h, 0.1, 2000)
     camera.position.z = 10
-
     // シーンを作成
     scene = new Scene()
+  }
+
+  // - サブウィンドウ -
+  const subInit = () => {
+    // ウィンドウサイズ
+    const subW = 200
+    const subH = 600
+    // renderer
+    subRenderer = new WebGLRenderer({ alpha: true })
+    subRenderer.setClearColor(0xffffff, 0.6)
+    subRenderer.setSize(subW, subH)
+    subRenderer.setPixelRatio(window.devicePixelRatio)
+    subElm = subCanvasMountRef.current
+    subDom = subRenderer.domElement
+    // canvasにレンダラーのcanvasを追加
+    subElm?.appendChild(subRenderer.domElement)
+    const fov = 60
+    subCamera = new PerspectiveCamera(fov, subW / subH, 0.1, 2000)
+    subCamera.position.y = 100
+    // sub scene
+    subScene = new Scene()
+    // 座標軸を表示
+    // const axes = new AxesHelper(25)
+    // subScene.add(axes)
+    //　カメラコントローラーの初期設定
+    const controls = new OrbitControls(subCamera, subDom)
+    controls.enableDamping = true
+
+    // object
+    const markerGeometry = new SphereGeometry(2, 32)
+    const markerMaterial = new MeshBasicMaterial({
+      color: 0xba299e,
+    })
+    markerMesh = new Mesh(markerGeometry, markerMaterial)
+    subScene.add(markerMesh)
   }
 
   const options = () => {
@@ -166,9 +194,11 @@ const GolfCourseTourComponent: NextPage = () => {
     cameraHelper = new CameraHelper(movingCamera)
     scene.add(cameraHelper)
     scene.add(cameraRouteObject)
+    // sub
+    subScene.add(cameraRouteObject)
   }
   // ゴルフ場3Dモデルの読み込み
-  const loadGolfCourseModel = () => {
+  const loadGolfCourseModel = (scene: Scene) => {
     // plyファイルの読み込み
     const plyLoader = new PLYLoader()
     const material = new PointsMaterial({
@@ -236,6 +266,7 @@ const GolfCourseTourComponent: NextPage = () => {
     const t = (Math.abs(scrollDistance) % looptime) / looptime
     cameraRouteGeometry.parameters.path.getPointAt(t, position)
     position.multiplyScalar(scale)
+    markerMesh.position.set(position.x, position.y, position.z)
     // interpolation
     const segments = cameraRouteGeometry.tangents.length
     const pickt = t * segments
@@ -288,6 +319,7 @@ const GolfCourseTourComponent: NextPage = () => {
 
     // 画面に表示
     renderer.render(scene, isMovingCamera ? movingCamera : camera)
+    subRenderer.render(subScene, subCamera)
     // 次のフレームを要求
     requestAnimationFrame(() => {
       render()
@@ -295,9 +327,11 @@ const GolfCourseTourComponent: NextPage = () => {
   }
   useEffect(() => {
     init()
+    subInit()
     options()
     createCameraRouteObject()
-    loadGolfCourseModel()
+    loadGolfCourseModel(scene)
+    loadGolfCourseModel(subScene)
     // 開始点
     addClickableObject(-2, 0.5, 29)
     addClickableObject(-3, 2, 15)
@@ -308,10 +342,11 @@ const GolfCourseTourComponent: NextPage = () => {
     render()
     // スクロールの移動量に合わせてカメラの座標を動かす
     document.addEventListener('wheel', (event) => {
-      scrollDistance += event.deltaY * 0.05
+      scrollDistance += event.deltaY * 0.2
     })
     return () => {
       elm?.removeChild(renderer.domElement)
+      subElm?.removeChild(subRenderer.domElement)
     }
   })
 
@@ -320,6 +355,10 @@ const GolfCourseTourComponent: NextPage = () => {
       <div ref={canvasMountRef} />
       <div id="box" ref={boxMountRef} className={styles.boxText} />
       <div id="modal" ref={modalMountRef} className={styles.boxText} />
+      <div
+        ref={subCanvasMountRef}
+        className="fixed top-1/2 right-2 z-10 -mt-[300px]"
+      />
     </>
   )
 }

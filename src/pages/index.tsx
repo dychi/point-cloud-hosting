@@ -9,6 +9,7 @@ export default function Home() {
         <Link href="/scroll">Scroll</Link>
         <Link href="/point_cloud_loader">PointCloudLoader</Link>
         <Link href="/golf_course_tour">GolfCourseTour</Link>
+        <Link href="/moving_object_with_scroll">MovingObjectWithScroll</Link>
       </div>
     </>
   )
