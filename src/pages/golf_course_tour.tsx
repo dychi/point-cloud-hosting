@@ -4,7 +4,7 @@ export default function GolfCourseTour() {
   return (
     <>
       <GolfCourseTourComponent />
-      <section style={{ top: 0, left: 0 }}>
+      {/* <section style={{ top: 0, left: 0 }}>
         <h2>Section: コンテンツ</h2>
         <p>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
@@ -16,7 +16,7 @@ export default function GolfCourseTour() {
           culpa qui officia deserunt mollit anim id est laborum.
         </p>
         <button onClick={() => console.log('hello')}> button </button>
-      </section>
+      </section> */}
     </>
   )
 }

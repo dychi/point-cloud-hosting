@@ -27,7 +27,7 @@ const GolfCourseTourComponent: NextPage = () => {
   const boxMountRef = useRef<HTMLDivElement>(null)
   const modalMountRef = useRef<HTMLDivElement>(null)
 
-  const [isMovingCamera, setIsMovingCamera] = useState(false)
+  const [isMovingCamera, setIsMovingCamera] = useState(true)
   const [showBoxText, setShowBoxText] = useState(false)
 
   var scrollPercent = 0
@@ -49,12 +49,12 @@ const GolfCourseTourComponent: NextPage = () => {
   // コースのカメラ視点移動パス定義
   const cameraRoutePath = new CatmullRomCurve3(
     [
-      new Vector3(21, 0.5, 29), // 最初の位置: レギュラーティー位置
-      new Vector3(10, 1, 15), // 最初の位置: レディースティー位置
-      new Vector3(2, 5, 6), // フェアウェイバンカー位置
+      new Vector3(-2, 0.5, 29), // 最初の位置: レギュラーティー位置
+      new Vector3(-3, 2, 15), // 最初の位置: レディースティー位置
+      new Vector3(-4, 5, 6), // フェアウェイバンカー位置
       new Vector3(-4, 6, -1), // グリーン位置
-      new Vector3(-17, 6.5, -10), // グリーン位置
-      new Vector3(-20, 5, -15), // グリーン位置
+      new Vector3(-2, 6.5, -10), // グリーン位置
+      new Vector3(-1, 5, -15), // グリーン位置
     ],
     false,
     'catmullrom'
@@ -158,7 +158,7 @@ const GolfCourseTourComponent: NextPage = () => {
     // 移動する視点のカメラ
     movingCamera = new PerspectiveCamera(
       84,
-      window.innerHeight / window.innerWidth,
+      window.innerWidth / window.innerHeight,
       0.01,
       1000
     )
@@ -181,6 +181,7 @@ const GolfCourseTourComponent: NextPage = () => {
         console.log(material.toJSON())
         const particles = new Points(geometry, material)
         particles.rotateX(-Math.PI / 2)
+        particles.rotateZ(-Math.PI / 4)
         scene.add(particles)
       },
       (xhr) => {
@@ -196,6 +197,8 @@ const GolfCourseTourComponent: NextPage = () => {
     const ballGeometry = new SphereGeometry(0.5, 32)
     const ballMaterial = new MeshBasicMaterial({
       color: 0xffffff,
+      opacity: 0.5,
+      transparent: true,
     })
     ballMesh = new Mesh(ballGeometry, ballMaterial)
     ballMesh.position.set(x, y, z)
@@ -262,20 +265,9 @@ const GolfCourseTourComponent: NextPage = () => {
     )
     lookAt.multiplyScalar(scale)
     // 移動する視点の座標を更新
-    if (movingCamera.position.x <= 0) {
-      movingCamera.matrix.lookAt(
-        movingCamera.position,
-        lookAt.multiply(new Vector3(-1, 1, -1)),
-        normal.multiply(new Vector3(1, -1, 1))
-      )
-    } else {
-      movingCamera.matrix.lookAt(
-        movingCamera.position,
-        lookAt,
-        normal.multiply(new Vector3(1, -1, 1))
-      )
-    }
-    movingCamera.quaternion.setFromRotationMatrix(movingCamera.matrix)
+    movingCamera.matrix.lookAt(movingCamera.position, lookAt, normal)
+    // ↓コメントアウトを外すとx軸をz軸方向に跨ぐ時に視点がおかしくなる
+    // movingCamera.quaternion.setFromRotationMatrix(movingCamera.matrix)
 
     // options
     cameraHelper.update()
@@ -292,7 +284,7 @@ const GolfCourseTourComponent: NextPage = () => {
     } else {
       updateElementPositionOnScreen(movingCamera, boxMountRef, '')
     }
-    updateElementPositionOnScreen(ballMesh, modalMountRef, '', true)
+    // updateElementPositionOnScreen(ballMesh, modalMountRef, '', true)
 
     // 画面に表示
     renderer.render(scene, isMovingCamera ? movingCamera : camera)
@@ -307,17 +299,15 @@ const GolfCourseTourComponent: NextPage = () => {
     createCameraRouteObject()
     loadGolfCourseModel()
     // 開始点
-    addClickableObject(21, 0.5, 29)
-    addClickableObject(10, 2, 15)
-    addClickableObject(2, 5, 6)
+    addClickableObject(-2, 0.5, 29)
+    addClickableObject(-3, 2, 15)
+    addClickableObject(-4, 5, 6)
     addClickableObject(-4, 6, -1)
-    addClickableObject(-20, 5, -15)
+    addClickableObject(-2, 5, -15)
     //
     render()
     // スクロールの移動量に合わせてカメラの座標を動かす
     document.addEventListener('wheel', (event) => {
-      console.log(event.deltaY)
-      // movingCamera.position.z -= event.deltaY * 0.05
       scrollDistance += event.deltaY * 0.05
     })
     return () => {
