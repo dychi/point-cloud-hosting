@@ -4,9 +4,11 @@ import {
   AxesHelper,
   CameraHelper,
   CatmullRomCurve3,
+  DoubleSide,
   GridHelper,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   Object3D,
   PerspectiveCamera,
   Points,
@@ -21,6 +23,7 @@ import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import GUI from 'lil-gui'
 import styles from '../styles/Home.module.css'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 
 const GolfCourseTourComponent: NextPage = () => {
   const canvasMountRef = useRef<HTMLDivElement>(null)
@@ -205,20 +208,47 @@ const GolfCourseTourComponent: NextPage = () => {
       vertexColors: true, // 頂点の色付けを有効にする
       size: 0.01,
     })
-    plyLoader.load(
-      'park.ply',
-      (geometry) => {
-        console.log(material.toJSON())
-        const particles = new Points(geometry, material)
-        particles.rotateX(-Math.PI / 2)
-        particles.rotateZ(-Math.PI / 4)
-        scene.add(particles)
+    // plyLoader.load(
+    //   'park.ply',
+    //   (geometry) => {
+    //     console.log(geometry.toJSON())
+    //     geometry.computeVertexNormals()
+    //     const particles = new Points(geometry, material)
+    //     particles.rotateX(-Math.PI / 2)
+    //     particles.rotateZ(-Math.PI / 4)
+    //     // scene.add(particles)
+    //   },
+    //   (xhr) => {
+    //     console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+    //   },
+    //   (error) => {
+    //     console.log(error)
+    //   }
+    // )
+    // fbxファイルの読み込み
+    const fbxLoader = new FBXLoader()
+    fbxLoader.load(
+      'park.fbx',
+      (object) => {
+        object.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            if ((child as THREE.Mesh).material) {
+              const oldMaterial = (child as Mesh).material
+              child.material = new MeshBasicMaterial({
+                color: oldMaterial.color,
+                map: oldMaterial.map,
+              })
+            }
+          }
+          child.rotation.set(0, -Math.PI / 8, 0)
+        })
+        scene.add(object)
       },
       (xhr) => {
         console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
       },
       (error) => {
-        console.log(error)
+        console.error(error)
       }
     )
   }

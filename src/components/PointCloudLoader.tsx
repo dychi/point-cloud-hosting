@@ -8,11 +8,15 @@ import {
   Scene,
   WebGLRenderer,
   AxesHelper,
+  MeshBasicMaterial,
+  Object3D,
+  Material,
 } from 'three'
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import GUI from 'lil-gui'
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 const PointCloudLoader: NextPage = () => {
   // canvasのコンテナ用
@@ -65,47 +69,47 @@ const PointCloudLoader: NextPage = () => {
       vertexColors: true, // 頂点の色付けを有効にする
       size: 0.01,
     })
-    plyLoader.load(
-      'park.ply',
-      (geometry) => {
-        console.log(material.toJSON())
-        const particles = new Points(geometry, material)
-        particles.rotateX(-Math.PI / 2)
-        scene.add(particles)
-      },
-      (xhr) => {
-        console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-      },
-      (error) => {
-        console.log(error)
-      }
-    )
-
-    // // fbxファイルの読み込み
-    // const fbxLoader = new FBXLoader()
-    // fbxLoader.load(
-    //   'dog.fbx',
-    //   (object) => {
-    //     object.traverse(function (child) {
-    //       if ((child as THREE.Mesh).isMesh) {
-    //         // (child as THREE.Mesh).material = material
-    //         if ((child as THREE.Mesh).material) {
-    //           ;(
-    //             (child as THREE.Mesh).material as THREE.MeshBasicMaterial
-    //           ).transparent = false
-    //         }
-    //       }
-    //     })
-    //     object.scale.set(0.01, 0.01, 0.01)
-    //     scene.add(object)
+    // plyLoader.load(
+    //   'park.ply',
+    //   (geometry) => {
+    //     console.log(material.toJSON())
+    //     const particles = new Points(geometry, material)
+    //     particles.rotateX(-Math.PI / 2)
+    //     scene.add(particles)
     //   },
     //   (xhr) => {
     //     console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
     //   },
     //   (error) => {
-    //     console.error(error)
+    //     console.log(error)
     //   }
     // )
+
+    // // fbxファイルの読み込み
+    const fbxLoader = new FBXLoader()
+    fbxLoader.load(
+      'park.fbx',
+      (object) => {
+        object.traverse((child) => {
+          if ((child as Mesh).isMesh) {
+            if ((child as Mesh).material) {
+              const oldMaterial = (child as Mesh).material as Material
+              child.material = new MeshBasicMaterial({
+                color: oldMaterial.color,
+                map: oldMaterial.map,
+              })
+            }
+          }
+        })
+        scene.add(object)
+      },
+      (xhr) => {
+        console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+      },
+      (error) => {
+        console.error(error)
+      }
+    )
 
     // render関数を定義
     const render = () => {
