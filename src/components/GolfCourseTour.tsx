@@ -30,12 +30,14 @@ const GolfCourseTourComponent: NextPage = () => {
   const boxMountRef = useRef<HTMLDivElement>(null)
   const modalMountRef = useRef<HTMLDivElement>(null)
   const subCanvasMountRef = useRef<HTMLDivElement>(null)
+  const distDivRef = useRef<HTMLDivElement>(null)
 
   const [isMovingCamera, setIsMovingCamera] = useState(true)
   const [showBoxText, setShowBoxText] = useState(false)
 
   // -- 関数定義 --
   // コースのカメラ視点移動パス定義
+  const pinVec = new Vector3(-1, 5, -15) // ピン位置(ゴール)
   const cameraRoutePath = new CatmullRomCurve3(
     [
       new Vector3(-2, 0.5, 29), // 最初の位置: レギュラーティー位置
@@ -43,7 +45,7 @@ const GolfCourseTourComponent: NextPage = () => {
       new Vector3(-4, 5, 6), // フェアウェイバンカー位置
       new Vector3(-4, 6, -1), // グリーン位置
       new Vector3(-2, 6.5, -10), // グリーン位置
-      new Vector3(-1, 5, -15), // グリーン位置
+      pinVec,
     ],
     false,
     'catmullrom'
@@ -288,11 +290,16 @@ const GolfCourseTourComponent: NextPage = () => {
   // -- rendering --
   // アニメーション用のrender関数を定義
   var scrollDistance: number = 10
+  var distanceToPin: number = 0
   const render = () => {
     // animate camera along spline
     const time = Date.now()
     const looptime = 20 * 1000
     // const t = (time % looptime) / looptime
+    const distanceToPin = pinVec.distanceTo(markerMesh.position)
+    const distElm = distDivRef.current as HTMLDivElement
+    distElm.innerHTML = `<p>${distanceToPin.toFixed(1)}</p>`
+
     const t = (Math.abs(scrollDistance) % looptime) / looptime
     cameraRouteGeometry.parameters.path.getPointAt(t, position)
     position.multiplyScalar(scale)
@@ -389,6 +396,14 @@ const GolfCourseTourComponent: NextPage = () => {
         ref={subCanvasMountRef}
         className="fixed top-1/2 right-2 z-10 -mt-[300px]"
       />
+      {/* Yard表示 */}
+      <div className="fixed top-0 left-0 flex flex-col items-center justify-center w-20 h-20 text-xs bg-slate-400 text-center">
+        <p>残り</p>
+        <div ref={distDivRef}>
+          <p>{distanceToPin.toFixed(1)}</p>
+        </div>
+        <p>yard</p>
+      </div>
     </>
   )
 }
