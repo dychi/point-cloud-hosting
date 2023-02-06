@@ -4,11 +4,9 @@ import {
   AxesHelper,
   CameraHelper,
   CatmullRomCurve3,
-  DoubleSide,
   GridHelper,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
   Object3D,
   PerspectiveCamera,
   Points,
@@ -154,7 +152,6 @@ const GolfCourseTourComponent: NextPage = () => {
 
     // guiを追加
     const gui = new GUI()
-    gui.add(document, 'title')
     const folderCamera = gui.addFolder('Camera')
     const obj = {
       look_with_tour: isMovingCamera,
