@@ -394,7 +394,7 @@ const GolfCourseTourComponent: NextPage = () => {
     document.addEventListener('touchmove', (event) => {
       var currentY = event.touches[0].clientY
       const delta = currentY - lastY
-      scrollDistance += delta * 0.3
+      scrollDistance += delta * 0.5
       event.preventDefault()
     })
     return () => {
