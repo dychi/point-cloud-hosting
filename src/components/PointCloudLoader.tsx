@@ -91,9 +91,9 @@ const PointCloudLoader: NextPage = () => {
       'park.fbx',
       (object) => {
         object.traverse((child) => {
-          if ((child as Mesh).isMesh) {
-            if ((child as Mesh).material) {
-              const oldMaterial = (child as Mesh).material as Material
+          if (child instanceof Mesh) {
+            if (child.material) {
+              const oldMaterial = child.material
               child.material = new MeshBasicMaterial({
                 color: oldMaterial.color,
                 map: oldMaterial.map,

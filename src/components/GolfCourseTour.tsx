@@ -5,8 +5,10 @@ import {
   CameraHelper,
   CatmullRomCurve3,
   GridHelper,
+  Material,
   Mesh,
   MeshBasicMaterial,
+  MeshStandardMaterial,
   Object3D,
   PerspectiveCamera,
   Points,
@@ -230,9 +232,9 @@ const GolfCourseTourComponent: NextPage = () => {
       'park.fbx',
       (object) => {
         object.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            if ((child as THREE.Mesh).material) {
-              const oldMaterial = (child as Mesh).material
+          if (child instanceof Mesh) {
+            if (child.material) {
+              const oldMaterial = child.material
               child.material = new MeshBasicMaterial({
                 color: oldMaterial.color,
                 map: oldMaterial.map,
