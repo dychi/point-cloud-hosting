@@ -8,7 +8,6 @@ import {
   Material,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
   Object3D,
   PerspectiveCamera,
   Points,
@@ -108,8 +107,13 @@ const GolfCourseTourComponent: NextPage = () => {
   // - サブウィンドウ -
   const subInit = () => {
     // ウィンドウサイズ
-    const subW = 200
-    const subH = 600
+    var subW, subH: number
+    subW = 200
+    subH = 600
+    if (window.innerWidth < 600) {
+      subW = 100
+      subH = 300
+    }
     // renderer
     subRenderer = new WebGLRenderer({ alpha: true })
     subRenderer.setClearColor(0xffffff, 0.6)
@@ -380,6 +384,19 @@ const GolfCourseTourComponent: NextPage = () => {
     document.addEventListener('wheel', (event) => {
       scrollDistance += event.deltaY * 0.2
     })
+    // スマホでのスクロール
+    var lastY: number
+    var touchMovedDistance = 0
+    document.addEventListener('touchstart', (event) => {
+      lastY = event.touches[0].clientY
+      event.preventDefault()
+    })
+    document.addEventListener('touchmove', (event) => {
+      var currentY = event.touches[0].clientY
+      const delta = currentY - lastY
+      scrollDistance += delta * 0.1
+      event.preventDefault()
+    })
     return () => {
       elm?.removeChild(renderer.domElement)
       subElm?.removeChild(subRenderer.domElement)
@@ -393,7 +410,7 @@ const GolfCourseTourComponent: NextPage = () => {
       <div id="modal" ref={modalMountRef} className={styles.boxText} />
       <div
         ref={subCanvasMountRef}
-        className="fixed top-1/2 right-2 z-10 -mt-[300px]"
+        className="fixed top-1/2 right-2 z-10 sm:-mt-[300px] -mt-[150px]"
       />
       {/* Yard表示 */}
       <div className="fixed top-0 left-0 flex flex-col items-center justify-center w-20 h-20 text-xs bg-slate-400 text-center">
